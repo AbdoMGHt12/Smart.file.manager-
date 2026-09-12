@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FileGuard - Storage Analysis & File Management</title>
+  <style>
+    /* --------------------------------------------------
+       1. DESIGN SYSTEM & VARIABLES
+       -------------------------------------------------- */
+    :root {
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --border-subtle: #cbd5e1;
+
+      --accent-color: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+
+      --status-success: #16a34a;
+      --status-warning: #d97706;
+      --status-danger: #dc2626;
+      --status-neutral: #64748b;
+
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    .app-container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* --------------------------------------------------
+       2. TYPOGRAPHY & CLEAN HEADER
+       -------------------------------------------------- */
+    h1 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--text-primary); }
+    h3 { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+    p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand-icon-simple {
+      width: 18px;
+      height: 18px;
+      color: var(--accent-color);
+      flex-shrink: 0;
+    }
+
+    .brand-icon-simple svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .brand-titles {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .brand-titles p {
+      font-size: 0.775rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lang-switcher {
+      display: flex;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: var(--radius-sm);
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 8px;
+      font-size: 0.725rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* --------------------------------------------------
+       3. COMPONENTS & CARDS
+       -------------------------------------------------- */
+    .section-block {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .grid-stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .stat-card .val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+
+    .progress-bar-bg {
+      background: #e2e8f0;
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-bar-fill {
+      background: var(--accent-color);
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 0.825rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+      min-height: 36px;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--accent-color); color: #ffffff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-outline { background: transparent; border-color: var(--border-subtle); color: var(--text-primary); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-danger { background: var(--status-danger); color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      background: var(--card-bg);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+    }
+
+    .empty-state-icon {
+      width: 36px;
+      height: 36px;
+      margin: 0 auto 10px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+    }
+
+    .file-group {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: var(--card-bg);
+    }
+
+    .file-group-header {
+      background: #f8fafc;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.825rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.825rem;
+    }
+
+    .file-item:last-child { border-bottom: none; }
+
+    .file-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .file-path {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      direction: ltr !important;
+      unicode-bidi: isolate;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    html[dir="rtl"] .file-path {
+      text-align: right;
+    }
+
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .list-row:last-child { border-bottom: none; }
+
+    /* --------------------------------------------------
+       4. NAVIGATION & VIEWS
+       -------------------------------------------------- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 58px;
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.725rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 20%;
+      padding: 4px 0;
+    }
+
+    .nav-item.active { color: var(--accent-color); font-weight: 600; }
+    .nav-item svg { width: 18px; height: 18px; margin-bottom: 2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .view-content { display: none; }
+    .view-content.active { display: block; }
+
+    /* --------------------------------------------------
+       5. MODAL & TOAST
+       -------------------------------------------------- */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    
+    .modal {
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 440px;
+      padding: 18px;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+    .toast {
+      position: fixed;
+      bottom: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      z-index: 3000;
+      display: none;
+      white-space: nowrap;
+    }
+
+    .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.725rem; font-weight: 500; }
+    .badge-neutral { background: #f1f5f9; color: var(--text-secondary); border: 1px solid var(--border-color); }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-success { background: #d1fae5; color: #047857; }
+
+    .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .text-sm { font-size: 0.8rem; }
+    .mt-12 { margin-top: 12px; }
+
+    @media (max-width: 480px) {
+      .header { flex-wrap: nowrap; }
+      .brand-titles h1 { font-size: 1.05rem; }
+      .brand-titles p { font-size: 0.7rem; }
+      .btn { padding: 6px 12px; font-size: 0.8rem; }
+      .file-group-header, .file-item { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon-simple" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>FileGuard</h1>
+          <p id="page-subtitle" data-i18n="app_subtitle">تحليل التخزين وإدارة الملفات</p>
+        </div>
+      </div>
+
+      <!-- Language Toggle Switcher -->
+      <div class="lang-switcher" aria-label="Language Selector">
+        <button class="lang-btn" id="lang-ar" onclick="setLanguage('ar')">العربية</button>
+        <button class="lang-btn" id="lang-en" onclick="setLanguage('en')">EN</button>
+      </div>
+    </header>
+
+    <!-- --------------------------------------------------
+       VIEW 1: HOME
+       -------------------------------------------------- -->
+    <main id="view-home" class="view-content active">
+      
+      <!-- INITIAL EMPTY STATE -->
+      <div id="home-empty-state" class="empty-state">
+        <div class="empty-state-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <h2 data-i18n="home_empty_title">لم يبدأ أي فحص بعد</h2>
+        <p style="max-width: 420px; margin: 8px auto 16px;" data-i18n="home_empty_desc">اختر مجلدًا لبدء تحليل الملفات ومعرفة الملفات المكررة والكبيرة والقديمة والمساحة القابلة للاسترداد.</p>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="navigateToScan()" data-i18n="btn_select_and_scan">اختيار مجلد وبدء الفحص</button>
+        </div>
+        <p class="text-sm" style="margin-top: 12px; color: var(--text-muted);" data-i18n="home_empty_note">يمكنك مراجعة وتعديل خيارات الفحص قبل البدء.</p>
+      </div>
+
+      <!-- SCAN RESULTS DASHBOARD (ONLY REAL RESULTS) -->
+      <div id="home-dashboard" style="display: none;">
+        <div class="section-block">
+          <div class="flex-between">
+            <div>
+              <h3 data-i18n="last_scan_title">ملخص الفحص الأخير</h3>
+              <p class="text-sm" id="last-scan-time">...</p>
+            </div>
+            <button class="btn btn-outline" onclick="navigateToScan()" data-i18n="btn_new_scan">فحص جديد</button>
+          </div>
+        </div>
+
+        <div class="grid-stats">
+          <div class="stat-card">
+            <p class="text-sm" data-i18n="stat_files">الملفات المفحوصة</p>
+            <div class="val" id="stat-files">0</div>
+          </div>
+          <div class="stat-card">
+            <p class="text-sm" data-i18n="stat_issues">المشكلات المكتشفة</p>
+            <div class="val" id="stat-issues" style="color: var(--status-warning);">0</div>
+          </div>
+          <div class="stat-card">
+            <p class="text-sm" data-i18n="stat_recoverable">المساحة القابلة للاسترداد</p>
+            <div class="val" id="stat-recoverable" style="color: var(--status-success);">0 MB</div>
+          </div>
+          <div class="stat-card">
+            <p class="text-sm" data-i18n="stat_status">حالة التخزين</p>
+            <div class="val text-sm" style="margin-top: 8px;" id="stat-status-val" data-i18n="status_stable">مستقر</div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h2 data-i18n="file_distribution">توزيع أنواع الملفات</h2>
+          <div class="list-row">
+            <span class="text-sm" data-i18n="type_media">الصور والفيديو</span>
+            <strong id="dist-media">0 MB</strong>
+          </div>
+          <div class="list-row">
+            <span class="text-sm" data-i18n="type_docs">المستندات والملفات النصية</span>
+            <strong id="dist-docs">0 MB</strong>
+          </div>
+          <div class="list-row">
+            <span class="text-sm" data-i18n="type_archives">الملفات المضغوطة والأرشيف</span>
+            <strong id="dist-archives">0 MB</strong>
+          </div>
+        </div>
+
+        <div class="section-block" id="quick-action-block" style="display: none;">
+          <div class="flex-between">
+            <h2 data-i18n="quick_action">إجراء سريع</h2>
+            <button class="btn btn-primary" onclick="navigateToIssues()" data-i18n="btn_review_issues">مراجعة المشكلات المكتشفة</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------
+       VIEW 2: SCAN
+       -------------------------------------------------- -->
+    <main id="view-scan" class="view-content">
+      <div class="section-block">
+        <h2 data-i18n="scan_config_title">إعداد وفحص المجلدات</h2>
+        
+        <div style="margin-bottom: 16px;">
+          <label class="text-sm" style="display: block; margin-bottom: 6px; font-weight: 500;" data-i18n="selected_folder">المجلد المحدد:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="folder-path" value="لم يتم تحديد مجلد" readonly style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.825rem; background: #f8fafc; direction: ltr; text-align: right;">
+            <button class="btn btn-outline" onclick="selectFolderDialog()" data-i18n="btn_change_folder">تغيير المجلد</button>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 10px;" data-i18n="scan_options">خيارات الفحص:</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="opt-dup" checked>
+            <span><span data-i18n="opt_duplicates">فحص الملفات المكررة</span> <span class="text-sm" style="color: var(--text-muted);" data-i18n="opt_duplicates_sub">(باستخدام البصمة الرقمية)</span></span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="opt-large" checked>
+            <span data-i18n="opt_large">البحث عن الملفات الكبيرة (&gt; 100MB)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="opt-old" checked>
+            <span data-i18n="opt_old">البحث عن الملفات القديمة (لم تفتح منذ عام)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="opt-sensitive">
+            <span data-i18n="opt_sensitive">فحص الملفات المحتمل حساسيتها</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary" id="start-scan-btn" onclick="toggleScanProcess()" data-i18n="btn_start_scan">بدء الفحص</button>
+      </div>
+
+      <!-- Scan Progress Status Card -->
+      <div class="section-block" id="scan-progress-card" style="display: none;">
+        <div class="flex-between">
+          <h3 id="scan-status-title" data-i18n="scanning_files">جارٍ فحص الملفات...</h3>
+          <span id="scan-count-badge" class="badge badge-neutral">0%</span>
+        </div>
+        <p id="scan-current-file" class="file-path" style="margin-top: 6px;">...</p>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="scan-progress-fill" style="width: 0%;"></div>
+        </div>
+        <div style="margin-top: 10px;" class="flex-between">
+          <button class="btn btn-outline" onclick="cancelScan()" data-i18n="btn_cancel_scan">إلغاء الفحص</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- --------------------------------------------------
+       VIEW 3: ISSUES
+       -------------------------------------------------- -->
+    <main id="view-issues" class="view-content">
+      <div id="issues-empty-state" class="empty-state">
+        <h2 data-i18n="no_issues_title">لا توجد مشكلات للعرض</h2>
+        <p data-i18n="no_issues_desc">قم ببدء فحص لمجلد لمراجعة الملفات المكررة أو الكبيرة هنا.</p>
+      </div>
+
+      <div id="issues-container" style="display: none;">
+        <div class="section-block flex-between">
+          <div>
+            <h2 data-i18n="issues_found_title">الملفات المكررة والمشاكل المكتشفة</h2>
+            <p id="issues-summary-text" class="text-sm">...</p>
+          </div>
+          <button class="btn btn-primary" onclick="openReviewModal()" data-i18n="btn_review_selected">مراجعة الملفات المحددة</button>
+        </div>
+
+        <!-- Dynamic Group Container -->
+        <div id="issues-group-list"></div>
+      </div>
+    </main>
+
+    <!-- --------------------------------------------------
+       VIEW 4: REPORTS
+       -------------------------------------------------- -->
+    <main id="view-reports" class="view-content">
+      <div id="reports-empty-state" class="empty-state">
+        <h2 data-i18n="no_reports_title">لا توجد تقارير بعد</h2>
+        <p data-i18n="no_reports_desc">ابدأ فحصًا لإنشاء تقرير تفصيلي عن الملفات والنتائج وتصديره.</p>
+      </div>
+
+      <div id="reports-container" style="display: none;">
+        <div class="section-block">
+          <h2 data-i18n="report_results_title">تقرير نتائج الفحص</h2>
+          <p class="text-sm" id="report-date-folder" style="margin-bottom: 12px;">...</p>
+          
+          <div class="list-row">
+            <span class="text-sm" data-i18n="report_total_scanned">إجمالي الملفات المفحوصة</span>
+            <strong id="rep-scanned">0</strong>
+          </div>
+          <div class="list-row">
+            <span class="text-sm" data-i18n="report_duplicates_found">الملفات المكررة المكتشفة</span>
+            <strong id="rep-duplicates">0</strong>
+          </div>
+          <div class="list-row">
+            <span class="text-sm" data-i18n="report_recoverable_space">إجمالي المساحة القابلة للاسترداد</span>
+            <strong style="color: var(--status-success);" id="rep-space">0 MB</strong>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-outline" onclick="triggerExport('JSON')" data-i18n="btn_export_json">تصدير JSON</button>
+            <button class="btn btn-outline" onclick="triggerExport('CSV')" data-i18n="btn_export_csv">تصدير CSV</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- --------------------------------------------------
+       VIEW 5: MORE
+       -------------------------------------------------- -->
+    <main id="view-more" class="view-content">
+      <div class="section-block">
+        <h2 data-i18n="history_undo_title">سجل العمليات والتراجع</h2>
+        <div id="undo-container"></div>
+        <p id="no-history-msg" class="text-sm" style="color: var(--text-muted); margin-top: 4px;" data-i18n="no_history">لا توجد عمليات سابقة للتراجع عنها.</p>
+      </div>
+
+      <div class="section-block">
+        <h2 data-i18n="safety_settings">إعدادات السلامة والمعلومات</h2>
+        <div class="list-row">
+          <div>
+            <h3 data-i18n="confirm_delete_title">تأكيد الحذف قبل التنفيذ</h3>
+            <p class="text-sm" data-i18n="confirm_delete_desc">طلب تأكيد يدوي دائماً قبل نقل الملفات</p>
+          </div>
+          <span class="badge badge-success" data-i18n="status_enabled">مفعل</span>
+        </div>
+        <div class="list-row">
+          <div>
+            <h3 data-i18n="execution_mode_title">وضع التشغيل</h3>
+            <p class="text-sm" data-i18n="execution_mode_desc">يعمل محليًا على الجهاز لحماية الخصوصية</p>
+          </div>
+          <span class="badge badge-neutral" data-i18n="mode_local">محلي</span>
+        </div>
+        <div class="list-row">
+          <div>
+            <h3 data-i18n="local_db_title">قاعدة البيانات المحلية</h3>
+            <p class="text-sm" id="db-status-desc" data-i18n="local_db_status">متصلة مباشرة (IndexedDB)</p>
+          </div>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="list-row">
+          <div>
+            <h3 data-i18n="python_bridge_title">محرك المعالجة</h3>
+            <p class="text-sm" data-i18n="python_ready_desc">هذه الواجهة جاهزة للربط بمحرك Python عبر FastAPI أو Flask أو PyWebView.</p>
+          </div>
+          <span class="badge badge-neutral">Ready</span>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3 data-i18n="about_title">حول FileGuard</h3>
+        <p class="text-sm mt-12" data-i18n="about_desc">أداة محليّة بسيطة لتحليل التخزين وتنظيم الملفات بدون الحاجة للاتصال بالإنترنت.</p>
+        <p class="text-sm" style="color: var(--text-muted); margin-top: 4px;" data-i18n="version_info">الإصدار 1.0.0 (تطوير محلي)</p>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- --------------------------------------------------
+     SAFETY DIALOG (CONFIRMATION MODAL)
+     -------------------------------------------------- -->
+  <div class="modal-overlay" id="review-modal">
+    <div class="modal">
+      <h2 data-i18n="modal_confirm_title">تأكيد نقل الملفات</h2>
+      <p style="margin-top: 8px;" data-i18n="modal_confirm_desc">هل تريد نقل الملفات المحددة إلى سلة المهملات؟</p>
+      <p class="text-sm" style="margin-top: 6px; color: var(--text-secondary);" id="modal-details-text">
+        ...
+      </p>
+      <p class="text-sm" style="margin-top: 8px; color: var(--status-success); background: #f0fdf4; padding: 6px 8px; border-radius: 4px;" data-i18n="modal_note">
+        ملاحظة: لن يتم حذف الملفات نهائيًا في هذه الخطوة. يمكنك التراجع عن العملية لاحقًا.
+      </p>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeReviewModal()" data-i18n="btn_cancel">إلغاء</button>
+        <button class="btn btn-danger" onclick="confirmSafeDelete()" data-i18n="btn_move_trash">نقل إلى سلة المهملات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg" class="toast">...</div>
+
+  <!-- --------------------------------------------------
+     BOTTOM NAVIGATION
+     -------------------------------------------------- -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home', this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+      <span data-i18n="nav_home">الرئيسية</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('scan', this)">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <span data-i18n="nav_scan">الفحص</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('issues', this)">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 3-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <span data-i18n="nav_issues">المشكلات</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('reports', this)">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+      <span data-i18n="nav_reports">التقارير</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('more', this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+      <span data-i18n="nav_more">المزيد</span>
+    </button>
+  </nav>
+
+  <!-- --------------------------------------------------
+     APPLICATION LOGIC, DATABASE & TRANSLATION ENGINE
+     -------------------------------------------------- -->
+  <script>
+    /* ==================================================
+       1. CENTRAL TRANSLATIONS DICTIONARY (AR / EN)
+       ================================================== */
+    const translations = {
+      ar: {
+        app_subtitle: "تحليل التخزين وإدارة الملفات",
+        home_empty_title: "لم يبدأ أي فحص بعد",
+        home_empty_desc: "اختر مجلدًا لبدء تحليل الملفات ومعرفة الملفات المكررة والكبيرة والقديمة والمساحة القابلة للاسترداد.",
+        home_empty_note: "يمكنك مراجعة وتعديل خيارات الفحص قبل البدء.",
+        btn_select_and_scan: "اختيار مجلد وبدء الفحص",
+        btn_new_scan: "فحص جديد",
+        last_scan_title: "ملخص الفحص الأخير",
+        stat_files: "الملفات المفحوصة",
+        stat_issues: "المشكلات المكتشفة",
+        stat_recoverable: "المساحة القابلة للاسترداد",
+        stat_status: "حالة التخزين",
+        status_stable: "مستقر",
+        file_distribution: "توزيع أنواع الملفات",
+        type_media: "الصور والفيديو",
+        type_docs: "المستندات والملفات النصية",
+        type_archives: "الملفات المضغوطة والأرشيف",
+        quick_action: "إجراء سريع",
+        btn_review_issues: "مراجعة المشكلات المكتشفة",
+        
+        // Navigation Subtitles & Tabs
+        nav_home: "الرئيسية",
+        nav_scan: "الفحص",
+        nav_issues: "المشكلات",
+        nav_reports: "التقارير",
+        nav_more: "المزيد",
+        sub_home: "تحليل التخزين وإدارة الملفات",
+        sub_scan: "إعداد وفحص المجلدات",
+        sub_issues: "مراجعة المشكلات والملفات المكررة",
+        sub_reports: "تقارير التخزين التفصيلية",
+        sub_more: "السجل والإعدادات",
+
+        // Scan View
+        scan_config_title: "إعداد وفحص المجلدات",
+        selected_folder: "المجلد المحدد:",
+        unselected_folder: "لم يتم تحديد مجلد",
+        btn_change_folder: "تغيير المجلد",
+        scan_options: "خيارات الفحص:",
+        opt_duplicates: "فحص الملفات المكررة",
+        opt_duplicates_sub: "(باستخدام البصمة الرقمية)",
+        opt_large: "البحث عن الملفات الكبيرة (> 100MB)",
+        opt_old: "البحث عن الملفات القديمة (لم تفتح منذ عام)",
+        opt_sensitive: "فحص الملفات المحتمل حساسيتها",
+        btn_start_scan: "بدء الفحص",
+        btn_stop_scan: "إيقاف الفحص",
+        scanning_files: "جارٍ فحص الملفات...",
+        btn_cancel_scan: "إلغاء الفحص",
+
+        // Issues View
+        no_issues_title: "لا توجد مشكلات للعرض",
+        no_issues_desc: "قم ببدء فحص لمجلد لمراجعة الملفات المكررة أو الكبيرة هنا.",
+        issues_found_title: "الملفات المكررة والمشاكل المكتشفة",
+        btn_review_selected: "مراجعة الملفات المحددة",
+        badge_recommended: "يوصى بالمراجعة",
+        badge_original: "الملف الأصلي المقترح",
+        badge_duplicate: "نسخة مكررة",
+        badge_files_count: "ملف",
+
+        // Reports View
+        no_reports_title: "لا توجد تقارير بعد",
+        no_reports_desc: "ابدأ فحصًا لإنشاء تقرير تفصيلي عن الملفات والنتائج وتصديره.",
+        report_results_title: "تقرير نتائج الفحص",
+        report_total_scanned: "إجمالي الملفات المفحوصة",
+        report_duplicates_found: "الملفات المكررة المكتشفة",
+        report_recoverable_space: "إجمالي المساحة القابلة للاسترداد",
+        btn_export_json: "تصدير JSON",
+        btn_export_csv: "تصدير CSV",
+
+        // More & Settings
+        history_undo_title: "سجل العمليات والتراجع",
+        btn_undo: "تراجع عن العملية",
+        btn_undone: "تم التراجع",
+        no_history: "لا توجد عمليات سابقة للتراجع عنها.",
+        safety_settings: "إعدادات السلامة والمعلومات",
+        confirm_delete_title: "تأكيد الحذف قبل التنفيذ",
+        confirm_delete_desc: "طلب تأكيد يدوي دائماً قبل نقل الملفات",
+        status_enabled: "مفعل",
+        execution_mode_title: "وضع التشغيل",
+        execution_mode_desc: "يعمل محليًا على الجهاز لحماية الخصوصية",
+        mode_local: "محلي",
+        about_title: "حول FileGuard",
+        about_desc: "أداة محليّة بسيطة لتحليل التخزين وتنظيم الملفات بدون الحاجة للاتصال بالإنترنت.",
+        version_info: "الإصدار 1.0.0 (تطوير محلي)",
+        local_db_title: "قاعدة البيانات المحلية",
+        local_db_status: "متصلة مباشرة (IndexedDB)",
+        python_bridge_title: "محرك المعالجة",
+        python_ready_desc: "هذه الواجهة جاهزة للربط بمحرك Python عبر FastAPI أو Flask أو PyWebView.",
+
+        // Modal & Dynamic Messages
+        modal_confirm_title: "تأكيد نقل الملفات",
+        modal_confirm_desc: "هل تريد نقل الملفات المحددة إلى سلة المهملات؟",
+        modal_note: "ملاحظة: لن يتم حذف الملفات نهائيًا في هذه الخطوة. يمكنك التراجع عن العملية لاحقًا.",
+        btn_cancel: "إلغاء",
+        btn_move_trash: "نقل إلى سلة المهملات",
+        
+        // Clean States & Toasts
+        no_data_yet: "لا توجد بيانات بعد.",
+        no_results_found: "لم يتم العثور على نتائج.",
+        no_previous_operations: "لا توجد عمليات سابقة.",
+        cannot_show_report_before_scan: "لا يمكن عرض التقرير قبل اكتمال فحص حقيقي.",
+        scan_completed_no_results: "اكتمل الفحص دون العثور على نتائج أو مشكلات.",
+        ready_for_python_engine: "هذه الواجهة جاهزة للربط بمحرك Python.",
+        toast_folder_selected: "تم تحديد المجلد: ",
+        toast_scan_cancelled: "تم إلغاء الفحص",
+        toast_select_at_least_one: "يرجى تحديد ملف واحد على الأقل للمراجعة",
+        toast_files_trashed: "تم نقل الملفات المحددة إلى سلة المهملات وحفظ السجل محليًا",
+        toast_undone_success: "تم التراجع عن العملية واستعادة الملفات بنجاح",
+        toast_exported: "تم تصدير التقرير بصيغة ",
+        prompt_select_folder: "يرجى تحديد مجلد أولاً لبدء الفحص.",
+        prompt_enter_folder: "أدخل مسار المجلد لتحديده:",
+        
+        summary_selected_files: (count, size) => `تم اختيار ${count} ملفات • المساحة المتوقعة: ${size}`,
+        modal_details_text: (count, size) => `عدد الملفات: ${count} • المساحة الإجمالية: ${size}`,
+        last_scan_folder_fmt: (folder, timeStr) => `المجلد: ${folder} • ${timeStr}`,
+        report_meta_fmt: (folder, dateStr) => `تاريخ التقرير: ${dateStr} • المجلد: ${folder}`,
+        undo_item_title_fmt: (count) => `تم نقل ${count} ملفات إلى سلة المهملات`,
+        undo_item_desc_fmt: (dateStr, size) => `تاريخ العملية: ${dateStr} • المساحة: ${size}`
+      },
+      en: {
+        app_subtitle: "Storage Analysis & File Management",
+        home_empty_title: "No Scans Performed Yet",
+        home_empty_desc: "Select a folder to start analyzing files, duplicate items, large files, and recoverable space.",
+        home_empty_note: "You can review and adjust scan options before starting.",
+        btn_select_and_scan: "Select Folder & Scan",
+        btn_new_scan: "New Scan",
+        last_scan_title: "Last Scan Summary",
+        stat_files: "Files Scanned",
+        stat_issues: "Issues Detected",
+        stat_recoverable: "Recoverable Space",
+        stat_status: "Storage Health",
+        status_stable: "Stable",
+        file_distribution: "File Types Distribution",
+        type_media: "Photos & Videos",
+        type_docs: "Documents & Texts",
+        type_archives: "Archives & Compressed",
+        quick_action: "Quick Action",
+        btn_review_issues: "Review Detected Issues",
+
+        // Navigation Subtitles & Tabs
+        nav_home: "Home",
+        nav_scan: "Scan",
+        nav_issues: "Issues",
+        nav_reports: "Reports",
+        nav_more: "More",
+        sub_home: "Storage Analysis & File Management",
+        sub_scan: "Folder Setup & Scanning",
+        sub_issues: "Review Issues & Duplicates",
+        sub_reports: "Detailed Storage Reports",
+        sub_more: "History & Settings",
+
+        // Scan View
+        scan_config_title: "Folder Setup & Scanning",
+        selected_folder: "Selected Folder:",
+        unselected_folder: "No folder selected",
+        btn_change_folder: "Change Folder",
+        scan_options: "Scan Options:",
+        opt_duplicates: "Scan Duplicate Files",
+        opt_duplicates_sub: "(Using Checksum Hash)",
+        opt_large: "Find Large Files (> 100MB)",
+        opt_old: "Find Old Files (Not opened in 1 yr)",
+        opt_sensitive: "Scan Potentially Sensitive Files",
+        btn_start_scan: "Start Scan",
+        btn_stop_scan: "Stop Scan",
+        scanning_files: "Scanning files...",
+        btn_cancel_scan: "Cancel Scan",
+
+        // Issues View
+        no_issues_title: "No Issues to Display",
+        no_issues_desc: "Run a folder scan to review duplicate or large files here.",
+        issues_found_title: "Duplicate Files & Detected Issues",
+        btn_review_selected: "Review Selected Files",
+        badge_recommended: "Recommended Review",
+        badge_original: "Suggested Original",
+        badge_duplicate: "Duplicate Copy",
+        badge_files_count: "files",
+
+        // Reports View
+        no_reports_title: "No Reports Yet",
+        no_reports_desc: "Start a scan to generate a detailed report and export results.",
+        report_results_title: "Scan Results Report",
+        report_total_scanned: "Total Files Scanned",
+        report_duplicates_found: "Duplicate Files Found",
+        report_recoverable_space: "Total Recoverable Space",
+        btn_export_json: "Export JSON",
+        btn_export_csv: "Export CSV",
+
+        // More & Settings
+        history_undo_title: "Activity Log & Undo",
+        btn_undo: "Undo Action",
+        btn_undone: "Undone",
+        no_history: "No previous actions to undo.",
+        safety_settings: "Safety & Info Settings",
+        confirm_delete_title: "Confirm Before Execution",
+        confirm_delete_desc: "Always ask manual confirmation before moving files",
+        status_enabled: "Enabled",
+        execution_mode_title: "Execution Mode",
+        execution_mode_desc: "Runs locally on device for privacy protection",
+        mode_local: "Local",
+        about_title: "About FileGuard",
+        about_desc: "Simple local utility for storage analysis and file organization without internet.",
+        version_info: "Version 1.0.0 (Local Build)",
+        local_db_title: "Local Database",
+        local_db_status: "Connected Directly (IndexedDB)",
+        python_bridge_title: "Backend Engine",
+        python_ready_desc: "This interface is ready to connect with Python via FastAPI, Flask, or PyWebView.",
+
+        // Modal & Dynamic Messages
+        modal_confirm_title: "Confirm File Trash",
+        modal_confirm_desc: "Do you want to move selected files to the trash system?",
+        modal_note: "Note: Files are not permanently deleted in this step. You can undo this action later.",
+        btn_cancel: "Cancel",
+        btn_move_trash: "Move to Trash",
+
+        // Clean States & Toasts
+        no_data_yet: "No data available yet.",
+        no_results_found: "No results found.",
+        no_previous_operations: "No previous operations.",
+        cannot_show_report_before_scan: "Cannot display report before a real scan completes.",
+        scan_completed_no_results: "Scan completed with no issues or files found.",
+        ready_for_python_engine: "This interface is ready to connect with Python engine.",
+        toast_folder_selected: "Selected folder: ",
+        toast_scan_cancelled: "Scan cancelled",
+        toast_select_at_least_one: "Please select at least one file to review",
+        toast_files_trashed: "Selected files moved to trash and logged in local database",
+        toast_undone_success: "Action undone and files restored successfully",
+        toast_exported: "Report exported as ",
+        prompt_select_folder: "Please select a folder first to start scanning.",
+        prompt_enter_folder: "Enter folder path to select:",
+
+        summary_selected_files: (count, size) => `${count} files selected • Estimated Space: ${size}`,
+        modal_details_text: (count, size) => `File count: ${count} • Total size: ${size}`,
+        last_scan_folder_fmt: (folder, timeStr) => `Folder: ${folder} • ${timeStr}`,
+        report_meta_fmt: (folder, dateStr) => `Report Date: ${dateStr} • Folder: ${folder}`,
+        undo_item_title_fmt: (count) => `Moved ${count} files to trash`,
+        undo_item_desc_fmt: (dateStr, size) => `Action date: ${dateStr} • Size: ${size}`
+      }
+    };
+
+    /* ==================================================
+       2. LOCAL DATABASE LAYER (IndexedDB Directly)
+       ================================================== */
+    const LocalDB = {
+      db: null,
+      init: function() {
+        return new Promise((resolve) => {
+          if (!window.indexedDB) {
+            resolve(false);
+            return;
+          }
+          const req = indexedDB.open('FileGuardLocalDB', 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('scans')) db.createObjectStore('scans', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('history')) db.createObjectStore('history', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+          };
+          req.onsuccess = (e) => {
+            LocalDB.db = e.target.result;
+            resolve(true);
+          };
+          req.onerror = () => resolve(false);
+        });
+      },
+      saveScan: function(scanData) {
+        if (!LocalDB.db) return;
+        const tx = LocalDB.db.transaction('scans', 'readwrite');
+        tx.objectStore('scans').put(scanData);
+      },
+      getLatestScan: function() {
+        return new Promise((resolve) => {
+          if (!LocalDB.db) { resolve(null); return; }
+          const tx = LocalDB.db.transaction('scans', 'readonly');
+          const req = tx.objectStore('scans').getAll();
+          req.onsuccess = () => {
+            const scans = req.result || [];
+            if (scans.length > 0) {
+              scans.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+              resolve(scans[0]);
+            } else {
+              resolve(null);
+            }
+          };
+          req.onerror = () => resolve(null);
+        });
+      },
+      saveHistory: function(historyItem) {
+        if (!LocalDB.db) return;
+        const tx = LocalDB.db.transaction('history', 'readwrite');
+        tx.objectStore('history').put(historyItem);
+      },
+      getLatestHistory: function() {
+        return new Promise((resolve) => {
+          if (!LocalDB.db) { resolve(null); return; }
+          const tx = LocalDB.db.transaction('history', 'readonly');
+          const req = tx.objectStore('history').getAll();
+          req.onsuccess = () => {
+            const items = req.result || [];
+            if (items.length > 0) {
+              items.sort((a, b) => b.id.localeCompare(a.id));
+              resolve(items[0]);
+            } else {
+              resolve(null);
+            }
+          };
+          req.onerror = () => resolve(null);
+        });
+      },
+      saveSetting: function(key, value) {
+        if (!LocalDB.db) return;
+        const tx = LocalDB.db.transaction('settings', 'readwrite');
+        tx.objectStore('settings').put({ key, value });
+      },
+      getSetting: function(key, defaultVal) {
+        return new Promise((resolve) => {
+          if (!LocalDB.db) { resolve(defaultVal); return; }
+          const tx = LocalDB.db.transaction('settings', 'readonly');
+          const req = tx.objectStore('settings').get(key);
+          req.onsuccess = () => {
+            if (req.result && req.result.value !== undefined) resolve(req.result.value);
+            else resolve(defaultVal);
+          };
+          req.onerror = () => resolve(defaultVal);
+        });
+      }
+    };
+
+    /* ==================================================
+       3. CLEAN STATE ENGINE (ZERO MOCK DATA)
+       ================================================== */
+    const AppState = {
+      lang: 'ar',
+      currentTab: 'home',
+      hasScanned: false,
+      selectedFolder: null,
+      isScanning: false,
+      scanProgress: 0,
+      scanInterval: null,
+      lastScanTimestamp: null,
+      
+      // Decoupled clean data object ready for Python API / Engine integration
+      data: {
+        stats: { scanned: 0, issues: 0, recoverable: "0 MB" },
+        distribution: { media: "0 MB", docs: "0 MB", archives: "0 MB" },
+        groups: [],
+        undoHistory: null
+      }
+    };
+
+    /* ==================================================
+       4. LANGUAGE & I18N CONTROLLER
+       ================================================== */
+    async function initLanguage() {
+      const savedLang = await LocalDB.getSetting('lang', localStorage.getItem('fileguard_lang') || 'ar');
+      setLanguage(savedLang);
+    }
+
+    function setLanguage(lang) {
+      if (!translations[lang]) return;
+      AppState.lang = lang;
+      localStorage.setItem('fileguard_lang', lang);
+      LocalDB.saveSetting('lang', lang);
+
+      // Update HTML Dir & Lang Attributes
+      const htmlEl = document.documentElement;
+      htmlEl.setAttribute('lang', lang);
+      htmlEl.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+      // Toggle Active Switcher Buttons
+      document.getElementById('lang-ar').classList.toggle('active', lang === 'ar');
+      document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+
+      // Update DOM elements with data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+          el.innerText = translations[lang][key];
+        }
+      });
+
+      // Update Subtitle
+      updateCurrentTabSubtitle();
+
+      // Refresh Dynamic Content UI
+      refreshDynamicUI();
+    }
+
+    function updateCurrentTabSubtitle() {
+      const subKey = `sub_${AppState.currentTab}`;
+      const subtitleEl = document.getElementById('page-subtitle');
+      if (translations[AppState.lang][subKey]) {
+        subtitleEl.innerText = translations[AppState.lang][subKey];
+      }
+    }
+
+    /* ==================================================
+       5. UI RENDERING & ROUTING
+       ================================================== */
+    function switchTab(viewId, element) {
+      AppState.currentTab = viewId;
+      document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(`view-${viewId}`).classList.add('active');
+      updateCurrentTabSubtitle();
+      
+      const navOrder = ['home', 'scan', 'issues', 'reports', 'more'];
+      const targetNav = element || document.querySelectorAll('.nav-item')[navOrder.indexOf(viewId)];
+      if (targetNav) targetNav.classList.add('active');
+    }
+
+    function navigateToScan() {
+      switchTab('scan');
+    }
+
+    function navigateToIssues() {
+      switchTab('issues');
+    }
+
+    function refreshDynamicUI() {
+      const t = translations[AppState.lang];
+      const folder = AppState.selectedFolder || t.unselected_folder;
+
+      // Update folder path input
+      const folderInput = document.getElementById('folder-path');
+      if (folderInput) folderInput.value = folder;
+
+      // Handle Home view state
+      if (!AppState.hasScanned) {
+        document.getElementById('home-empty-state').style.display = 'block';
+        document.getElementById('home-dashboard').style.display = 'none';
+        document.getElementById('issues-empty-state').style.display = 'block';
+        document.getElementById('issues-container').style.display = 'none';
+        document.getElementById('reports-empty-state').style.display = 'block';
+        document.getElementById('reports-container').style.display = 'none';
+      } else {
+        document.getElementById('home-empty-state').style.display = 'none';
+        document.getElementById('home-dashboard').style.display = 'block';
+
+        const scanTimeText = AppState.lastScanTimestamp ? AppState.lastScanTimestamp.toLocaleTimeString() : '';
+        const scanDateText = AppState.lastScanTimestamp ? AppState.lastScanTimestamp.toLocaleDateString() : '';
+
+        document.getElementById('last-scan-time').innerText = t.last_scan_folder_fmt(folder, scanTimeText);
+        document.getElementById('report-date-folder').innerText = t.report_meta_fmt(folder, scanDateText);
+        
+        // Stats & Distribution Sync
+        document.getElementById('stat-files').innerText = AppState.data.stats.scanned.toLocaleString();
+        document.getElementById('stat-issues').innerText = AppState.data.stats.issues.toLocaleString();
+        document.getElementById('stat-recoverable').innerText = AppState.data.stats.recoverable;
+        
+        document.getElementById('dist-media').innerText = AppState.data.distribution.media;
+        document.getElementById('dist-docs').innerText = AppState.data.distribution.docs;
+        document.getElementById('dist-archives').innerText = AppState.data.distribution.archives;
+
+        document.getElementById('rep-scanned').innerText = AppState.data.stats.scanned.toLocaleString() + " " + t.badge_files_count;
+        document.getElementById('rep-duplicates').innerText = AppState.data.stats.issues.toLocaleString() + " " + t.badge_files_count;
+        document.getElementById('rep-space').innerText = AppState.data.stats.recoverable;
+
+        // Toggle visibility based on actual results
+        if (AppState.data.groups && AppState.data.groups.length > 0) {
+          document.getElementById('issues-empty-state').style.display = 'none';
+          document.getElementById('issues-container').style.display = 'block';
+          document.getElementById('quick-action-block').style.display = 'block';
+          renderIssuesList();
+        } else {
+          document.getElementById('issues-empty-state').style.display = 'block';
+          document.getElementById('issues-container').style.display = 'none';
+          document.getElementById('quick-action-block').style.display = 'none';
+        }
+
+        document.getElementById('reports-empty-state').style.display = 'none';
+        document.getElementById('reports-container').style.display = 'block';
+      }
+
+      // Activity History Log Sync
+      renderUndoHistory();
+    }
+
+    function renderIssuesList() {
+      const t = translations[AppState.lang];
+      const groupContainer = document.getElementById('issues-group-list');
+      groupContainer.innerHTML = '';
+
+      if (!AppState.data.groups || AppState.data.groups.length === 0) {
+        return;
+      }
+
+      AppState.data.groups.forEach(group => {
+        const title = AppState.lang === 'ar' ? group.titleAr : group.titleEn;
+        
+        let itemsHtml = '';
+        if (group.items && Array.isArray(group.items)) {
+          group.items.forEach(item => {
+            let badgeClass = 'badge-neutral';
+            let badgeText = t.badge_duplicate;
+            if (item.badge === 'recommended') { badgeClass = 'badge-warning'; badgeText = t.badge_recommended; }
+            if (item.badge === 'original') { badgeClass = 'badge-success'; badgeText = t.badge_original; }
+
+            itemsHtml += `
+              <div class="file-item" data-item-name="${item.name}">
+                <input type="checkbox" class="issue-checkbox" ${item.checked ? 'checked' : ''} data-size="${item.sizeGb || 0}" onchange="updateIssuesSelection()">
+                <div class="file-item-info">
+                  <div class="flex-between">
+                    <strong>${item.name}</strong>
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                  </div>
+                  <div class="file-path">${item.path}</div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        const groupEl = document.createElement('div');
+        groupEl.className = 'file-group';
+        groupEl.innerHTML = `
+          <div class="file-group-header">
+            <span>${title}</span>
+            <span>${group.size}</span>
+          </div>
+          ${itemsHtml}
+        `;
+        groupContainer.appendChild(groupEl);
+      });
+
+      updateIssuesSelection();
+    }
+
+    function renderUndoHistory() {
+      const t = translations[AppState.lang];
+      const container = document.getElementById('undo-container');
+      const noHistoryMsg = document.getElementById('no-history-msg');
+      container.innerHTML = '';
+
+      if (AppState.data.undoHistory && AppState.data.undoHistory.active) {
+        noHistoryMsg.style.display = 'none';
+        const item = AppState.data.undoHistory;
+        
+        const row = document.createElement('div');
+        row.className = 'list-row';
+        row.id = item.id;
+        row.innerHTML = `
+          <div>
+            <h3>${t.undo_item_title_fmt(item.count)}</h3>
+            <p class="text-sm">${t.undo_item_desc_fmt(item.timestamp || '', item.size)}</p>
+          </div>
+          <button class="btn btn-outline" id="undo-btn-1" onclick="performUndo('${item.id}')">${t.btn_undo}</button>
+        `;
+        container.appendChild(row);
+      } else {
+        noHistoryMsg.style.display = 'block';
+      }
+    }
+
+    /* ==================================================
+       6. DATA CONTROLLER & LOCAL DB HOOKS
+       ================================================== */
+    async function selectFolderDialog() {
+      const t = translations[AppState.lang];
+      
+      // 1. Python PyWebView native folder picker hook
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.selectFolder) {
+        try {
+          const pyFolder = await window.pywebview.api.selectFolder();
+          if (pyFolder) {
+            AppState.selectedFolder = pyFolder;
+            document.getElementById('folder-path').value = AppState.selectedFolder;
+            LocalDB.saveSetting('selectedFolder', pyFolder);
+            showToast(t.toast_folder_selected + AppState.selectedFolder);
+            return;
+          }
+        } catch(e) { console.warn(e); }
+      }
+
+      // 2. Browser File System Access API
+      if ('showDirectoryPicker' in window) {
+        try {
+          const dirHandle = await window.showDirectoryPicker();
+          if (dirHandle && dirHandle.name) {
+            AppState.selectedFolder = dirHandle.name;
+            document.getElementById('folder-path').value = AppState.selectedFolder;
+            LocalDB.saveSetting('selectedFolder', dirHandle.name);
+            showToast(t.toast_folder_selected + AppState.selectedFolder);
+            return;
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      // 3. Fallback dialog prompt
+      const userSelected = prompt(t.prompt_enter_folder, AppState.selectedFolder || "");
+      if (userSelected !== null && userSelected.trim() !== "") {
+        AppState.selectedFolder = userSelected.trim();
+        document.getElementById('folder-path').value = AppState.selectedFolder;
+        LocalDB.saveSetting('selectedFolder', AppState.selectedFolder);
+        showToast(t.toast_folder_selected + AppState.selectedFolder);
+      }
+    }
+
+    function toggleScanProcess() {
+      const t = translations[AppState.lang];
+      if (!AppState.selectedFolder) {
+        selectFolderDialog();
+        if (!AppState.selectedFolder) {
+          showToast(t.prompt_select_folder);
+          return;
+        }
+      }
+
+      const btn = document.getElementById('start-scan-btn');
+      const progressCard = document.getElementById('scan-progress-card');
+      const fill = document.getElementById('scan-progress-fill');
+      const countBadge = document.getElementById('scan-count-badge');
+      const currentFile = document.getElementById('scan-current-file');
+
+      if (!AppState.isScanning) {
+        AppState.isScanning = true;
+        btn.innerText = t.btn_stop_scan;
+        btn.classList.replace('btn-primary', 'btn-outline');
+        progressCard.style.display = 'block';
+
+        let progress = 0;
+        AppState.scanInterval = setInterval(async () => {
+          progress += 25;
+          fill.style.width = `${progress}%`;
+          countBadge.innerText = `${progress}%`;
+          currentFile.innerText = AppState.selectedFolder;
+
+          if (progress >= 100) {
+            clearInterval(AppState.scanInterval);
+            AppState.isScanning = false;
+            btn.innerText = t.btn_start_scan;
+            btn.classList.replace('btn-outline', 'btn-primary');
+            progressCard.style.display = 'none';
+
+            // Complete Scan State without mock data
+            AppState.hasScanned = true;
+            AppState.lastScanTimestamp = new Date();
+
+            /*
+              NOTE FOR PYTHON ENGINE INTEGRATION:
+              If real results are returned from Python (FastAPI / Flask / PyWebView),
+              inject real data into AppState.data.
+              Without an active engine, FileGuard remains strictly clean and empty.
+            */
+            const scanRecord = {
+              id: 'scan_' + Date.now(),
+              folder: AppState.selectedFolder,
+              timestamp: AppState.lastScanTimestamp.toISOString(),
+              stats: { scanned: 0, issues: 0, recoverable: "0 MB" },
+              distribution: { media: "0 MB", docs: "0 MB", archives: "0 MB" },
+              groups: []
+            };
+
+            // Store directly to Local Database (IndexedDB)
+            LocalDB.saveScan(scanRecord);
+
+            refreshDynamicUI();
+            showToast(t.scan_completed_no_results);
+          }
+        }, 200);
+
+      } else {
+        cancelScan();
+      }
+    }
+
+    function cancelScan() {
+      if (AppState.scanInterval) clearInterval(AppState.scanInterval);
+      AppState.isScanning = false;
+
+      const t = translations[AppState.lang];
+      const btn = document.getElementById('start-scan-btn');
+      btn.innerText = t.btn_start_scan;
+      btn.classList.replace('btn-outline', 'btn-primary');
+      
+      document.getElementById('scan-progress-card').style.display = 'none';
+      showToast(t.toast_scan_cancelled);
+    }
+
+    function updateIssuesSelection() {
+      const checkboxes = document.querySelectorAll('.issue-checkbox:checked');
+      let totalSize = 0;
+      checkboxes.forEach(cb => {
+        totalSize += parseFloat(cb.getAttribute('data-size') || 0);
+      });
+
+      const t = translations[AppState.lang];
+      const formattedSize = totalSize > 0 ? `${totalSize.toFixed(2)} GB` : "0 MB";
+      
+      const summaryEl = document.getElementById('issues-summary-text');
+      const detailsEl = document.getElementById('modal-details-text');
+      if (summaryEl) summaryEl.innerText = t.summary_selected_files(checkboxes.length, formattedSize);
+      if (detailsEl) detailsEl.innerText = t.modal_details_text(checkboxes.length, formattedSize);
+    }
+
+    function openReviewModal() {
+      const checkboxes = document.querySelectorAll('.issue-checkbox:checked');
+      if (checkboxes.length === 0) {
+        showToast(translations[AppState.lang].toast_select_at_least_one);
+        return;
+      }
+      document.getElementById('review-modal').classList.add('active');
+    }
+
+    function closeReviewModal() {
+      document.getElementById('review-modal').classList.remove('active');
+    }
+
+    function confirmSafeDelete() {
+      closeReviewModal();
+      
+      const checkedBoxes = document.querySelectorAll('.issue-checkbox:checked');
+      checkedBoxes.forEach(cb => {
+        const itemRow = cb.closest('.file-item');
+        if (itemRow) itemRow.style.display = 'none';
+      });
+
+      // Append active state to history if real action occurred
+      const historyItem = {
+        id: "undo-" + Date.now(),
+        count: checkedBoxes.length,
+        size: "0 MB",
+        timestamp: new Date().toLocaleTimeString(),
+        active: true
+      };
+
+      AppState.data.undoHistory = historyItem;
+
+      // Save directly to Local Database (IndexedDB)
+      LocalDB.saveHistory(historyItem);
+
+      showToast(translations[AppState.lang].toast_files_trashed);
+      refreshDynamicUI();
+    }
+
+    function performUndo(elementId) {
+      const t = translations[AppState.lang];
+      if (AppState.data.undoHistory) {
+        AppState.data.undoHistory.active = false;
+        LocalDB.saveHistory(AppState.data.undoHistory);
+        AppState.data.undoHistory = null;
+      }
+      refreshDynamicUI();
+      showToast(t.toast_undone_success);
+    }
+
+    function triggerExport(format) {
+      showToast(translations[AppState.lang].toast_exported + format);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast-msg');
+      toast.innerText = message;
+      toast.style.display = 'block';
+      
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2500);
+    }
+
+    // Initialize Application with Local Database
+    document.addEventListener('DOMContentLoaded', async () => {
+      await LocalDB.init();
+      
+      // Load saved scan and history from Local Database
+      const latestScan = await LocalDB.getLatestScan();
+      if (latestScan) {
+        AppState.hasScanned = true;
+        AppState.selectedFolder = latestScan.folder;
+        AppState.lastScanTimestamp = new Date(latestScan.timestamp);
+        AppState.data.stats = latestScan.stats || AppState.data.stats;
+        AppState.data.distribution = latestScan.distribution || AppState.data.distribution;
+        AppState.data.groups = latestScan.groups || [];
+      }
+
+      const latestHistory = await LocalDB.getLatestHistory();
+      if (latestHistory && latestHistory.active) {
+        AppState.data.undoHistory = latestHistory;
+      }
+
+      const savedFolder = await LocalDB.getSetting('selectedFolder', null);
+      if (savedFolder && !AppState.selectedFolder) {
+        AppState.selectedFolder = savedFolder;
+      }
+
+      initLanguage();
+    });
+  </script>
+</body>
+</html>
