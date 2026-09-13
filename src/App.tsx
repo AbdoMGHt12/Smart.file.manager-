@@ -315,9 +315,10 @@ export default function App() {
     });
 
     // Python engine hook if active
+    let backendTrashId: string | null = null;
     if (window.pywebview?.api?.moveToTrash) {
       try {
-        await window.pywebview.api.moveToTrash(checkedIds);
+        backendTrashId = await window.pywebview.api.moveToTrash(checkedIds);
       } catch (e) {
         console.warn('Python moveToTrash error:', e);
       }
@@ -330,7 +331,7 @@ export default function App() {
     })).filter(g => g.items.length > 0);
 
     const historyRecord: UndoHistoryRecord = {
-      id: `undo_${Date.now()}`,
+      id: backendTrashId || `undo_${Date.now()}`,
       count: selectedCount,
       size: selectedSize,
       timestamp: new Date().toLocaleTimeString(),
