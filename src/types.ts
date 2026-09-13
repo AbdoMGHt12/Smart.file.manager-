@@ -71,7 +71,7 @@ declare global {
       api?: {
         selectFolder?: () => Promise<string | null>;
         startScan?: (folder: string, options: ScanOptions) => Promise<ScanResultData>;
-        moveToTrash?: (filePaths: string[]) => Promise<boolean>;
+        moveToTrash?: (filePaths: string[]) => Promise<string | null>;
         undoTrash?: (historyId: string) => Promise<boolean>;
       };
     };
