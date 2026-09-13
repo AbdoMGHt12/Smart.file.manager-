@@ -1,6 +1,3 @@
 {
   "name": "FileGuard",
-  "description": "أداة تحليل التخزين وإدارة الملفات المحلية وفحص الملفات المكررة والكبيرة - Storage Analysis & File Management",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
+  "description": "أداة تحليل التخزين وإدارة الملفات المحلية وفحص الملفات المكررة والكبيرة - Storage Analysis & File Management ,
