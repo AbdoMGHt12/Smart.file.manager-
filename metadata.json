@@ -1,3 +1,6 @@
 {
   "name": "FileGuard",
-  "description": "أداة تحليل التخزين وإدارة الملفات المحلية وفحص الملفات المكررة والكبيرة - Storage Analysis & File Management ,
+  "description": "أداة تحليل التخزين وإدارة الملفات المحلية وفحص الملفات المكررة والكبيرة - Storage Analysis & File Management",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
